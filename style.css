@@ -1,0 +1,164 @@
+/* reset i podstawy */
+* {
+  margin: 0; padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: Arial, sans-serif;
+  color: #333;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* POZIOME MENU */
+.header {
+  display: flex;
+  align-items: center;
+  background: #2e7d32;
+  color: #fff;
+  padding: 0 16px;
+  height: 56px;
+}
+.header .btn {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 20px;
+  margin-right: 16px;
+}
+.header .logo {
+  font-size: 20px;
+  font-weight: bold;
+}
+.header .search {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 24px;
+}
+.header .search input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 4px 0 0 4px;
+  border: none;
+}
+.header .search .icon-btn {
+  padding: 8px;
+  border-radius: 0 4px 4px 0;
+}
+.header .avatar {
+  background: #66bb6a;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* SUGGESTIONS */
+.suggestions {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  list-style: none;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 10;
+}
+.suggestions li {
+  padding: 8px;
+  cursor: pointer;
+}
+.suggestions li:hover {
+  background: #f2f2f2;
+}
+
+/* LAYOUT: ASIDE + MAIN */
+.layout {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* PIONOWE MENU */
+.sidebar {
+  background: #f5f5f5;
+  width: 60px;
+  transition: width 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.sidebar.expanded {
+  width: 200px;
+}
+.sidebar nav ul {
+  list-style: none;
+}
+.sidebar nav li {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  cursor: pointer;
+}
+.sidebar nav .icon {
+  font-size: 20px;
+  margin-right: 12px;
+}
+.sidebar nav .text {
+  display: none;
+}
+.sidebar.expanded nav .text {
+  display: inline;
+}
+.sidebar-footer {
+  display: flex;
+  justify-content: space-around;
+  padding: 12px;
+}
+
+/* GŁÓWNA TREŚĆ */
+.content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(240px,1fr));
+  gap: 16px;
+}
+
+/* MENU KONTA */
+.account-menu {
+  position: absolute;
+  top: 56px;
+  right: 16px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  list-style: none;
+  width: 160px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.account-menu.hidden {
+  display: none;
+}
+.account-menu ul {
+  padding: 8px 0;
+}
+.account-menu li {
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.account-menu li:hover {
+  background: #f2f2f2;
+}
