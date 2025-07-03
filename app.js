@@ -28,13 +28,6 @@ searchInput.addEventListener("input", () => {
   suggestions.classList.toggle("hidden", !suggestions.childElementCount);
 });
 
-// Menu konta
-const accountBtn = document.getElementById("accountBtn");
-const accountMenu = document.getElementById("accountMenu");
-accountBtn.addEventListener("click", () => {
-  accountMenu.classList.toggle("hidden");
-});
-
 // Przekierowania w menu konta
 document.getElementById("myChannel").onclick = () => {/* … */}
 document.getElementById("createChannel").onclick = () => {/* … */}
