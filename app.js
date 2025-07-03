@@ -28,6 +28,17 @@ searchInput.addEventListener("input", () => {
   suggestions.classList.toggle("hidden", !suggestions.childElementCount);
 });
 
+// Menu konta – rozwijanie/zamykanie
+const accountBtn = document.getElementById("accountBtn");
+const accountMenu = document.getElementById("accountMenu");
+
+if (accountBtn && accountMenu) {
+  accountBtn.addEventListener("click", () => {
+    accountMenu.classList.toggle("hidden");
+  });
+}
+
+
 // Przekierowania w menu konta
 document.getElementById("myChannel").onclick = () => {/* … */}
 document.getElementById("createChannel").onclick = () => {/* … */}
