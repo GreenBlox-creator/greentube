@@ -44,6 +44,9 @@ document.getElementById("myChannel").onclick = () => {/* … */}
 document.getElementById("createChannel").onclick = () => {/* … */}
 document.getElementById("studio").onclick = () => {
   window.location.href = "https://greentube.example.com/studio";
+}
+document.getElementById("uploadVideo").onclick = () => {
+  window.location.href = "upload.html";
 };
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
