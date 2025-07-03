@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>GreenTube – Kanał</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="module" src="logincheck.js" defer></script>
+  <script type="module" src="app.js" defer></script>
+</head>
+<body>
+
+  <!-- POZIOME MENU -->
+  <header class="header">
+    <button id="hamburger" class="btn icon-btn">
+      <span class="icon">☰</span>
+    </button>
+
+    <div class="logo">GreenTube</div>
+
+    <div class="search">
+      <input id="searchInput" type="text" placeholder="Szukaj..." autocomplete="off" />
+      <button class="btn icon-btn"><span class="icon">🔍</span></button>
+      <ul id="suggestions" class="suggestions hidden"></ul>
+    </div>
+
+    <button id="accountBtn" class="btn icon-btn">
+      <span class="avatar">U</span>
+    </button>
+  </header>
+
+  <!-- LAYOUT -->
+  <div class="layout">
+    <aside id="sidebar" class="sidebar collapsed">
+      <nav>
+        <ul>
+          <li><span class="icon">🏠</span><span class="text">Główna</span></li>
+          <li><span class="icon">🎥</span><span class="text">Wideo</span></li>
+          <li><span class="icon">📃</span><span class="text">Playlisty</span></li>
+          <li><span class="icon">⭐</span><span class="text">Subskrypcje</span></li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn icon-btn"><span class="icon">⚙️</span></button>
+        <button class="btn icon-btn"><span class="icon">❗</span></button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <h2>🎬 Filmy użytkownika</h2>
+      <div class="video-grid" id="channelVideos"></div>
+    </main>
+  </div>
+
+  <!-- MENU KONTA -->
+  <div id="accountMenu" class="account-menu hidden">
+    <ul>
+      <li id="myChannel">Twój kanał</li>
+      <li id="createChannel">Utwórz kanał</li>
+      <li id="uploadVideo">Prześlij film</li>
+      <li id="studio">Statystyki (GreenTube Studio)</li>
+      <li id="logout">Wyloguj się</li>
+    </ul>
+  </div>
+
+  <!-- Firebase logika -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnGKAkzW9w2Y1NBeyasBTY29YYYzFok_A",
+      authDomain: "greentube-b93d1.firebaseapp.com",
+      projectId: "greentube-b93d1",
+      storageBucket: "greentube-b93d1.appspot.com",
+      messagingSenderId: "818380659407",
+      appId: "1:818380659407:web:7ee71139590488d78e75ba"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 📌 Pobierz UID z adresu URL
+    const uid = window.location.pathname.split("/").pop();
+
+    const videoGrid = document.getElementById("channelVideos");
+
+    async function loadUserVideos() {
+      const q = query(collection(db, "videos"), where("uid", "==", uid));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        videoGrid.innerHTML = "<p>Brak filmów na tym kanale.</p>";
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const card = document.createElement("div");
+        card.className = "video-card";
+        card.innerHTML = `
+          <video src="${data.url}" controls></video>
+          <h3>${data.title}</h3>
+        `;
+        videoGrid.appendChild(card);
+      });
+    }
+
+    loadUserVideos();
+  </script>
+</body>
+</html>
