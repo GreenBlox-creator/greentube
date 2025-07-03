@@ -80,7 +80,9 @@
     const db = getFirestore(app);
 
     // 📌 Pobierz UID z adresu URL
-    const uid = window.location.href = `channel.html?uid=${user.uid}`;
+    const params = new URLSearchParams(window.location.search);
+const uid = params.get("uid");
+
 
 
     const videoGrid = document.getElementById("channelVideos");
