@@ -6,109 +6,129 @@
   <link rel="stylesheet" href="style.css" />
   <script type="module" src="logincheck.js" defer></script>
   <script type="module" src="app.js" defer></script>
+  <style>
+    /* Dodatkowe style dla kafelków */
+    .video-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); 
+      gap: 1rem; 
+    }
+    .video-card { position: relative; font-family: sans-serif; }
+    .video-thumb { width: 100%; height: auto; cursor: pointer; }
+    .ellipsis-btn {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(0,0,0,0.6); color: white; border: none;
+      font-size: 1.2rem; line-height: 1; cursor: pointer;
+    }
+    .actions {
+      position: absolute; top: 32px; right: 8px;
+      background: white; border: 1px solid #ccc; list-style: none;
+      padding: 0.5rem 0; margin: 0; display: none;
+    }
+    .actions li { padding: 0.3rem 1rem; cursor: pointer; }
+    .actions li:hover { background: #f0f0f0; }
+    .video-title { margin: 0.5rem 0 0.2rem; cursor: pointer; }
+    .video-meta { color: #555; font-size: 0.9rem; }
+  </style>
 </head>
 <body>
 
-  <!-- POZIOME MENU -->
-  <header class="header">
-    <button id="hamburger" class="btn icon-btn">
-      <span class="icon">☰</span>
-    </button>
+  <!-- (tu wklej header, sidebar i accountMenu jak w index.html/upload.html) -->
 
-    <div class="logo">GreenTube</div>
+  <main class="content">
+    <h2>🎬 Filmy użytkownika</h2>
+    <div class="video-grid" id="channelVideos"></div>
+  </main>
 
-    <div class="search">
-      <input id="searchInput" type="text" placeholder="Szukaj..." autocomplete="off" />
-      <button class="btn icon-btn"><span class="icon">🔍</span></button>
-      <ul id="suggestions" class="suggestions hidden"></ul>
-    </div>
-
-    <button id="accountBtn" class="btn icon-btn">
-      <span class="avatar">U</span>
-    </button>
-  </header>
-
-  <!-- LAYOUT -->
-  <div class="layout">
-    <aside id="sidebar" class="sidebar collapsed">
-      <nav>
-        <ul>
-          <li><span class="icon">🏠</span><span class="text">Główna</span></li>
-          <li><span class="icon">🎥</span><span class="text">Wideo</span></li>
-          <li><span class="icon">📃</span><span class="text">Playlisty</span></li>
-          <li><span class="icon">⭐</span><span class="text">Subskrypcje</span></li>
-        </ul>
-      </nav>
-      <div class="sidebar-footer">
-        <button class="btn icon-btn"><span class="icon">⚙️</span></button>
-        <button class="btn icon-btn"><span class="icon">❗</span></button>
-      </div>
-    </aside>
-
-    <main class="content">
-      <h2>🎬 Filmy użytkownika</h2>
-      <div class="video-grid" id="channelVideos"></div>
-    </main>
-  </div>
-
-  <!-- MENU KONTA -->
-  <div id="accountMenu" class="account-menu hidden">
-    <ul>
-      <li id="myChannel">Twój kanał</li>
-      <li id="createChannel">Utwórz kanał</li>
-      <li id="uploadVideo">Prześlij film</li>
-      <li id="studio">Statystyki (GreenTube Studio)</li>
-      <li id="logout">Wyloguj się</li>
-    </ul>
-  </div>
-
-  <!-- Firebase logika -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDnGKAkzW9w2Y1NBeyasBTY29YYYzFok_A",
-      authDomain: "greentube-b93d1.firebaseapp.com",
-      projectId: "greentube-b93d1",
-      storageBucket: "greentube-b93d1.appspot.com",
-      messagingSenderId: "818380659407",
-      appId: "1:818380659407:web:7ee71139590488d78e75ba"
-    };
-
+    // Inicjalizacja Firebase
+    const firebaseConfig = { /* … Twoje dane … */ };
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const db  = getFirestore(app);
+    const auth = getAuth(app);
 
-    // 📌 Pobierz UID z adresu URL
+    // Odczyt UID kanału z parametru
     const params = new URLSearchParams(window.location.search);
-const uid = params.get("uid");
-
-
+    const channelUid = params.get("uid");
 
     const videoGrid = document.getElementById("channelVideos");
+    let currentUid = null; // UID zalogowanego
+
+    // Sprawdzamy, kto jest zalogowany (lub null)
+    onAuthStateChanged(auth, user => {
+      currentUid = user?.uid || null;
+      loadUserVideos();
+    });
 
     async function loadUserVideos() {
-      const q = query(collection(db, "videos"), where("uid", "==", uid));
-      const snapshot = await getDocs(q);
-
-      if (snapshot.empty) {
+      const q = query(collection(db, "videos"), where("uid", "==", channelUid));
+      const snap = await getDocs(q);
+      if (snap.empty) {
         videoGrid.innerHTML = "<p>Brak filmów na tym kanale.</p>";
         return;
       }
 
-      snapshot.forEach(doc => {
+      snap.forEach(doc => {
         const data = doc.data();
+        const vidId = doc.id;
+        // Miniaturka przez Uploadcare
+        const thumb = data.url + "/-/preview/320x180/";
+        // Meta: wyświetlenia i czas
+        const views = data.views || 0;
+        const ageMs = Date.now() - data.created;
+        const ageText = (() => {
+          const days = Math.floor(ageMs/86400000);
+          if (days>0) return days+" dni temu";
+          const hrs = Math.floor(ageMs/3600000);
+          if (hrs>0) return hrs+" godzin temu";
+          const mins = Math.floor(ageMs/60000);
+          return mins+" minut temu";
+        })();
+
+        // Kafelek
         const card = document.createElement("div");
         card.className = "video-card";
         card.innerHTML = `
-          <video src="${data.url}" controls></video>
-          <h3>${data.title}</h3>
+          <img class="video-thumb" src="${thumb}" alt="${data.title}" />
+          <button class="ellipsis-btn">⋮</button>
+          <ul class="actions">
+            ${currentUid === channelUid
+              ? `<li class="edit">Edytuj</li>`
+              : `<li class="report">Zgłoś</li>`}
+          </ul>
+          <h3 class="video-title">${data.title}</h3>
+          <div class="video-meta">${views} wyświetleń • ${ageText}</div>
         `;
         videoGrid.appendChild(card);
+
+        // Kliknięcie miniaturki lub tytułu
+        card.querySelector(".video-thumb")
+            .addEventListener("click", () => location.href = `watch.html?videoId=${vidId}`);
+        card.querySelector(".video-title")
+            .addEventListener("click", () => location.href = `watch.html?videoId=${vidId}`);
+
+        // Menu akcji
+        const ell = card.querySelector(".ellipsis-btn");
+        const act = card.querySelector(".actions");
+        ell.addEventListener("click", e => {
+          e.stopPropagation();
+          act.style.display = act.style.display === "block" ? "none" : "block";
+        });
+
+        // Obsługa „Edytuj” lub „Zgłoś”
+        if (currentUid === channelUid) {
+          act.querySelector(".edit").addEventListener("click", () =>
+            location.href = `edit.html?videoId=${vidId}`);
+        } else {
+          act.querySelector(".report").addEventListener("click", () =>
+            alert("Film zgłoszony do moderacji"));
+        }
       });
     }
-
-    loadUserVideos();
   </script>
 </body>
 </html>
