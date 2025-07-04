@@ -74,7 +74,7 @@
   </div>
 
   <!-- Firebase + Uploadcare logika -->
-  <script type="module">
+<script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
   import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
@@ -102,42 +102,42 @@
       return;
     }
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const title = document.getElementById("videoTitle").value;
-  const file = widget.value();
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const title = document.getElementById("videoTitle").value;
+      const file = widget.value();
 
-  if (!file || !title) {
-    status.textContent = "Wybierz film i wpisz tytuł.";
-    return;
-  }
-
-  status.textContent = "Zapisywanie...";
-
-  try {
-    const fileInfo = await file.promise(); // ⏳ Czekamy na pełne dane z Uploadcare
-
-    await addDoc(collection(db, "videos"), {
-      url: fileInfo.cdnUrl,
-      title,
-      created: Date.now(),
-      uid: user.uid
-    });
-
-    status.textContent = "✅ Film zapisany!";
-    form.reset();
-    widget.value(null);
-
-    window.location.href = `channel.html?uid=${user.uid}`;
-  } catch (err) {
-    console.error("Błąd Firebase:", err.code, err.message);
-    status.textContent = `❌ Błąd zapisu: ${err.message}`;
-  }
-});
-
+      if (!file || !title) {
+        status.textContent = "Wybierz film i wpisz tytuł.";
+        return;
       }
+
+      status.textContent = "Zapisywanie...";
+
+      try {
+        const fileInfo = await file.promise();
+
+        await addDoc(collection(db, "videos"), {
+          url: fileInfo.cdnUrl,
+          title,
+          created: Date.now(),
+          uid: user.uid
+        });
+
+        status.textContent = "✅ Film zapisany!";
+        form.reset();
+        widget.value(null);
+
+        console.log("Przekierowanie do:", `channel.html?uid=${user.uid}`);
+        window.location.href = `channel.html?uid=${user.uid}`;
+      } catch (err) {
+        console.error("Błąd Firebase:", err.code, err.message);
+        status.textContent = `❌ Błąd zapisu: ${err.message}`;
+      }
+    });
   });
 </script>
+
 
 
 </body>
