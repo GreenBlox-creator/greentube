@@ -129,8 +129,8 @@
         // ✅ Przekierowanie do kanału użytkownika
         window.location.href = `channel.html?uid=${user.uid}`;
       } catch (err) {
-        console.error(err);
-        status.textContent = "❌ Błąd zapisu.";
+        console.error("Błąd Firebase:", err.code, err.message);
+status.textContent = `❌ Błąd zapisu: ${err.message}`;
       }
     });
   });
