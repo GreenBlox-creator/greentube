@@ -102,35 +102,39 @@
       return;
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const title = document.getElementById("videoTitle").value;
-      const fileInfo = widget.value();
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const title = document.getElementById("videoTitle").value;
+  const file = widget.value();
 
-      if (!fileInfo || !title) {
-        status.textContent = "Wybierz film i wpisz tytuł.";
-        return;
-      }
+  if (!file || !title) {
+    status.textContent = "Wybierz film i wpisz tytuł.";
+    return;
+  }
 
-      status.textContent = "Zapisywanie...";
+  status.textContent = "Zapisywanie...";
 
-      try {
-        await addDoc(collection(db, "videos"), {
-          url: fileInfo.cdnUrl,
-          title,
-          created: Date.now(),
-          uid: user.uid
-        });
+  try {
+    const fileInfo = await file.promise(); // ⏳ Czekamy na pełne dane z Uploadcare
 
-        status.textContent = "✅ Film zapisany!";
-        form.reset();
-        widget.value(null);
+    await addDoc(collection(db, "videos"), {
+      url: fileInfo.cdnUrl,
+      title,
+      created: Date.now(),
+      uid: user.uid
+    });
 
-        // ✅ Przekierowanie do kanału użytkownika
-        window.location.href = `channel.html?uid=${user.uid}`;
-      } catch (err) {
-        console.error("Błąd Firebase:", err.code, err.message);
-status.textContent = `❌ Błąd zapisu: ${err.message}`;
+    status.textContent = "✅ Film zapisany!";
+    form.reset();
+    widget.value(null);
+
+    window.location.href = `channel.html?uid=${user.uid}`;
+  } catch (err) {
+    console.error("Błąd Firebase:", err.code, err.message);
+    status.textContent = `❌ Błąd zapisu: ${err.message}`;
+  }
+});
+
       }
     });
   });
