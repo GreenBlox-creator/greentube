@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>GreenTube – Odtwarzacz</title>
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .player-wrapper {
+      max-width: 960px;
+      margin: 2rem auto;
+    }
+    .video-info {
+      max-width: 960px;
+      margin: 1rem auto;
+      font-family: sans-serif;
+    }
+    .video-info h2 {
+      margin-bottom: 0.5rem;
+    }
+    .video-meta {
+      color: #666;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Możesz wkleić tu header i sidebar jak w innych plikach -->
+
+  <main>
+    <div class="player-wrapper">
+      <video id="player" controls playsinline></video>
+    </div>
+    <div class="video-info">
+      <h2 id="videoTitle">Ładowanie...</h2>
+      <div class="video-meta" id="videoMeta"></div>
+    </div>
+  </main>
+
+  <script type="module">
+    import Plyr from "https://cdn.plyr.io/3.7.8/plyr.polyfilled.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnGKAkzW9w2Y1NBeyasBTY29YYYzFok_A",
+      authDomain: "greentube-b93d1.firebaseapp.com",
+      projectId: "greentube-b93d1",
+      storageBucket: "greentube-b93d1.appspot.com",
+      messagingSenderId: "818380659407",
+      appId: "1:818380659407:web:7ee71139590488d78e75ba"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const videoId = params.get("videoId");
+
+    const player = new Plyr("#player", {
+      controls: ["play", "progress", "current-time", "mute", "volume", "settings", "fullscreen"]
+    });
+
+    const titleEl = document.getElementById("videoTitle");
+    const metaEl = document.getElementById("videoMeta");
+
+    async function loadVideo() {
+      if (!videoId) {
+        titleEl.textContent = "Nie podano ID filmu.";
+        return;
+      }
+
+      const ref = doc(db, "videos", videoId);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        titleEl.textContent = "Nie znaleziono filmu.";
+        return;
+      }
+
+      const data = snap.data();
+      titleEl.textContent = data.title || "Bez tytułu";
+
+      const views = (data.views || 0) + 1;
+      const created = data.created || Date.now();
+      const ageMs = Date.now() - created;
+      const ageText = (() => {
+        const days = Math.floor(ageMs / 86400000);
+        if (days > 0) return `${days} dni temu`;
+        const hrs = Math.floor(ageMs / 3600000);
+        if (hrs > 0) return `${hrs} godzin temu`;
+        const mins = Math.floor(ageMs / 60000);
+        return `${mins} minut temu`;
+      })();
+
+      metaEl.textContent = `${views} wyświetleń • ${ageText}`;
+
+      // Zwiększ licznik wyświetleń
+      await updateDoc(ref, { views: increment(1) });
+
+      // Ustaw źródło filmu
+      player.source = {
+        type: "video",
+        sources: [
+          {
+            src: data.url,
+            type: "video/mp4",
+            size: 720
+          }
+        ]
+      };
+    }
+
+    loadVideo();
+  </script>
+
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+</body>
+</html>
