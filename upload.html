@@ -116,7 +116,6 @@
 
       try {
         const fileInfo = await file.promise();
-        await fileInfo.done(); // ⏳ Czekamy aż Uploadcare zakończy przetwarzanie
 
         const ref = await addDoc(collection(db, "videos"), {
           url: fileInfo.cdnUrl,
