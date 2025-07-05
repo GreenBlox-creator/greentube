@@ -108,35 +108,38 @@
       const file = widget.value();
 
       if (!file || !title) {
-        status.textContent = "Wybierz film i wpisz tytuł.";
+        status.textContent = "⚠️ Wybierz film i wpisz tytuł.";
         return;
       }
 
-      status.textContent = "Zapisywanie...";
+      status.textContent = "⏳ Przetwarzanie filmu, proszę czekać...";
 
       try {
         const fileInfo = await file.promise();
+        await fileInfo.done(); // ⏳ Czekamy aż Uploadcare zakończy przetwarzanie
 
-        await addDoc(collection(db, "videos"), {
+        const ref = await addDoc(collection(db, "videos"), {
           url: fileInfo.cdnUrl,
           title,
           created: Date.now(),
           uid: user.uid
         });
 
-        status.textContent = "✅ Film zapisany!";
+        status.textContent = "✅ Film przesłany! Przekierowuję...";
         form.reset();
         widget.value(null);
 
-        console.log("Przekierowanie do:", `channel.html?uid=${user.uid}`);
-        window.location.href = `channel.html?uid=${user.uid}`;
+        setTimeout(() => {
+          window.location.href = `watch.html?videoId=${ref.id}`;
+        }, 1000); // ⏱️ Dajemy Firestore chwilę na zapis
       } catch (err) {
-        console.error("Błąd Firebase:", err.code, err.message);
+        console.error("❌ Błąd Firebase:", err.code, err.message);
         status.textContent = `❌ Błąd zapisu: ${err.message}`;
       }
     });
   });
 </script>
+
 
 
 
