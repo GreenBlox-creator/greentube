@@ -31,19 +31,28 @@
 </head>
 <body>
 
-  <!-- MENU -->
+  <!-- POZIOME MENU -->
   <header class="header">
-    <button class="btn icon-btn"><span class="icon">☰</span></button>
+    <button id="hamburger" class="btn icon-btn">
+      <span class="icon">☰</span>
+    </button>
+
     <div class="logo">GreenTube</div>
+
     <div class="search">
-      <input type="text" placeholder="Szukaj..." />
+      <input id="searchInput" type="text" placeholder="Szukaj..." autocomplete="off" />
       <button class="btn icon-btn"><span class="icon">🔍</span></button>
+      <ul id="suggestions" class="suggestions hidden"></ul>
     </div>
-    <button class="btn icon-btn"><span class="avatar">U</span></button>
+
+    <button id="accountBtn" class="btn icon-btn">
+      <span class="avatar">U</span>
+    </button>
   </header>
 
+  <!-- LAYOUT -->
   <div class="layout">
-    <aside class="sidebar collapsed">
+    <aside id="sidebar" class="sidebar collapsed">
       <nav>
         <ul>
           <li><span class="icon">🏠</span><span class="text">Główna</span></li>
@@ -52,6 +61,10 @@
           <li><span class="icon">⭐</span><span class="text">Subskrypcje</span></li>
         </ul>
       </nav>
+      <div class="sidebar-footer">
+        <button class="btn icon-btn"><span class="icon">⚙️</span></button>
+        <button class="btn icon-btn"><span class="icon">❗</span></button>
+      </div>
     </aside>
 
     <main class="content">
@@ -63,6 +76,17 @@
         <div class="video-meta" id="videoMeta"></div>
       </div>
     </main>
+  </div>
+
+  <!-- MENU KONTA -->
+  <div id="accountMenu" class="account-menu hidden">
+    <ul>
+      <li id="myChannel">Twój kanał</li>
+      <li id="createChannel">Utwórz kanał</li>
+      <li id="uploadVideo">Prześlij film</li>
+      <li id="studio">Statystyki (GreenTube Studio)</li>
+      <li id="logout">Wyloguj się</li>
+    </ul>
   </div>
 
   <!-- Firebase + Plyr -->
@@ -154,6 +178,68 @@
         titleEl.innerHTML = `<span class="error">❌ Błąd: ${err.message || err.toString()}</span>`;
       }
     }
+
+    // 🔧 Skrypty menu (z app.js)
+    const hamburger = document.getElementById("hamburger");
+    const sidebar = document.getElementById("sidebar");
+    hamburger.addEventListener("click", () => {
+      sidebar.classList.toggle("expanded");
+    });
+
+    const searchInput = document.getElementById("searchInput");
+    const suggestions = document.getElementById("suggestions");
+    const sampleWords = ["muzyka", "programowanie", "vlog", "tutorial", "gaming"];
+
+    searchInput.addEventListener("input", () => {
+      const q = searchInput.value.toLowerCase();
+      suggestions.innerHTML = "";
+      if (q.length < 2) {
+        suggestions.classList.add("hidden");
+        return;
+      }
+      sampleWords
+        .filter(w => w.startsWith(q))
+        .forEach(w => {
+          const li = document.createElement("li");
+          li.textContent = w;
+          li.onclick = () => searchInput.value = w;
+          suggestions.append(li);
+        });
+      suggestions.classList.toggle("hidden", !suggestions.childElementCount);
+    });
+
+    const accountBtn = document.getElementById("accountBtn");
+    const accountMenu = document.getElementById("accountMenu");
+
+    if (accountBtn && accountMenu) {
+      accountBtn.addEventListener("click", () => {
+        accountMenu.classList.toggle("hidden");
+      });
+    }
+
+        document.getElementById("myChannel").onclick = () => {
+      window.location.href = "channel.html";
+    };
+
+    document.getElementById("createChannel").onclick = () => {
+      window.location.href = "create-channel.html";
+    };
+
+    document.getElementById("studio").onclick = () => {
+      window.location.href = "studio.html";
+    };
+
+    document.getElementById("uploadVideo").onclick = () => {
+      window.location.href = "upload.html";
+    };
+
+    document.getElementById("logout").addEventListener("click", () => {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "https://greenblox-creator.github.io/accounts";
+      }).catch((error) => {
+        console.error("Błąd wylogowania:", error);
+      });
+    });
   </script>
 </body>
 </html>
