@@ -128,7 +128,8 @@
         const fileInfo = await file.promise();
 
         const videoData = {
-          url: fileInfo.cdnUrl,
+          url: fileInfo.cdnUrl + "/-/format/mp4/",
+,
           title,
           created: Date.now(),
           uid: user.uid,
