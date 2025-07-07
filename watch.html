@@ -22,25 +22,28 @@
       color: #666;
       font-size: 0.9rem;
     }
+    .error {
+      color: red;
+      font-weight: bold;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
 
-  <!-- POZIOME MENU -->
+  <!-- MENU -->
   <header class="header">
-    <button id="hamburger" class="btn icon-btn"><span class="icon">☰</span></button>
+    <button class="btn icon-btn"><span class="icon">☰</span></button>
     <div class="logo">GreenTube</div>
     <div class="search">
-      <input id="searchInput" type="text" placeholder="Szukaj..." autocomplete="off" />
+      <input type="text" placeholder="Szukaj..." />
       <button class="btn icon-btn"><span class="icon">🔍</span></button>
-      <ul id="suggestions" class="suggestions hidden"></ul>
     </div>
-    <button id="accountBtn" class="btn icon-btn"><span class="avatar">U</span></button>
+    <button class="btn icon-btn"><span class="avatar">U</span></button>
   </header>
 
-  <!-- LAYOUT -->
   <div class="layout">
-    <aside id="sidebar" class="sidebar collapsed">
+    <aside class="sidebar collapsed">
       <nav>
         <ul>
           <li><span class="icon">🏠</span><span class="text">Główna</span></li>
@@ -49,10 +52,6 @@
           <li><span class="icon">⭐</span><span class="text">Subskrypcje</span></li>
         </ul>
       </nav>
-      <div class="sidebar-footer">
-        <button class="btn icon-btn"><span class="icon">⚙️</span></button>
-        <button class="btn icon-btn"><span class="icon">❗</span></button>
-      </div>
     </aside>
 
     <main class="content">
@@ -66,23 +65,11 @@
     </main>
   </div>
 
-  <!-- MENU KONTA -->
-  <div id="accountMenu" class="account-menu hidden">
-    <ul>
-      <li id="myChannel">Twój kanał</li>
-      <li id="createChannel">Utwórz kanał</li>
-      <li id="uploadVideo">Prześlij film</li>
-      <li id="studio">Statystyki (GreenTube Studio)</li>
-      <li id="logout">Wyloguj się</li>
-    </ul>
-  </div>
-
-  <!-- Biblioteki -->
+  <!-- Firebase + Plyr -->
   <script src="https://cdn.jsdelivr.net/npm/firebase@11.10.0/firebase-app-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@11.10.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
-  <!-- Logika -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDnGKAkzW9w2Y1NBeyasBTY29YYYzFok_A",
@@ -108,7 +95,7 @@
 
     async function loadVideo() {
       if (!videoId) {
-        titleEl.textContent = "Nie podano ID filmu.";
+        titleEl.innerHTML = "<span class='error'>❌ Nie podano ID filmu.</span>";
         return;
       }
 
@@ -117,16 +104,13 @@
         const snap = await ref.get();
 
         if (!snap.exists) {
-          titleEl.textContent = "Nie znaleziono filmu.";
-          console.warn("📛 Dokument nie istnieje:", videoId);
+          titleEl.innerHTML = "<span class='error'>❌ Nie znaleziono filmu o ID:<br>" + videoId + "</span>";
           return;
         }
 
         const data = snap.data();
-        console.log("📦 Dane filmu:", data);
-
         if (!data.ready) {
-          titleEl.textContent = "Film jeszcze się przetwarza...";
+          titleEl.innerHTML = "<span class='error'>⏳ Film jeszcze się przetwarza...</span>";
           return;
         }
 
@@ -145,21 +129,19 @@
         })();
 
         metaEl.textContent = `${views} wyświetleń • ${ageText}`;
-        ref.update({ views: firebase.firestore.FieldValue.increment(1) });
+
+        await ref.update({ views: firebase.firestore.FieldValue.increment(1) });
 
         const videoSrc = data.url.endsWith("/") ? data.url + "video.mp4" : data.url;
-        console.log("▶️ Finalny link do filmu:", videoSrc);
+        document.getElementById("player").src = videoSrc;
 
         player.source = {
           type: "video",
           sources: [{ src: videoSrc, type: "video/mp4" }]
         };
 
-        document.getElementById("player").src = videoSrc;
-
       } catch (err) {
-        console.error("❌ Błąd podczas ładowania filmu:", err);
-        titleEl.textContent = "Wystąpił błąd podczas ładowania filmu.";
+        titleEl.innerHTML = `<span class="error">❌ Błąd: ${err.message || err.toString()}</span>`;
       }
     }
 
