@@ -2,16 +2,32 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>GreenTube – Prześlij film</title>
+  <title>GreenTube – Odtwarzacz</title>
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
   <link rel="stylesheet" href="style.css" />
-  <script type="module" src="logincheck.js" defer></script>
-  <script type="module" src="app.js" defer></script>
-
-  <!-- Uploadcare -->
-  <script>
-    UPLOADCARE_PUBLIC_KEY = "6a5bb7bed1d0bf4cfd44";
-  </script>
-  <script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"></script>
+  <style>
+    .player-wrapper {
+      max-width: 960px;
+      margin: 2rem auto;
+    }
+    .video-info {
+      max-width: 960px;
+      margin: 1rem auto;
+      font-family: sans-serif;
+    }
+    .video-info h2 {
+      margin-bottom: 0.5rem;
+    }
+    .video-meta {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
 <body>
 
@@ -52,13 +68,13 @@
     </aside>
 
     <main class="content">
-      <h2>📤 Prześlij film przez Uploadcare</h2>
-      <form id="uploadForm">
-        <input type="hidden" role="uploadcare-uploader" data-tabs="file url" data-clearable />
-        <input type="text" id="videoTitle" placeholder="Tytuł filmu" required />
-        <button type="submit">Zapisz film</button>
-        <p id="uploadStatus"></p>
-      </form>
+      <div class="player-wrapper">
+        <video id="player" controls playsinline></video>
+      </div>
+      <div class="video-info">
+        <h2 id="videoTitle">Ładowanie...</h2>
+        <div class="video-meta" id="videoMeta"></div>
+      </div>
     </main>
   </div>
 
@@ -73,89 +89,126 @@
     </ul>
   </div>
 
-  <!-- Firebase + Uploadcare logika -->
+  <!-- Firebase + Plyr -->
+  <script src="https://cdn.jsdelivr.net/npm/firebase@11.10.0/firebase-app-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@11.10.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@11.10.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    addDoc,
-    doc,
-    setDoc
-  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-  import {
-    getAuth,
-    onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnGKAkzW9w2Y1NBeyasBTY29YYYzFok_A",
+      authDomain: "greentube-b93d1.firebaseapp.com",
+      projectId: "greentube-b93d1",
+      storageBucket: "greentube-b93d1.appspot.com",
+      messagingSenderId: "818380659407",
+      appId: "1:818380659407:web:7ee71139590488d78e75ba"
+    };
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDnGKAkzW9w2Y1NBeyasBTY29YYYzFok_A",
-    authDomain: "greentube-b93d1.firebaseapp.com",
-    projectId: "greentube-b93d1",
-    storageBucket: "greentube-b93d1.appspot.com",
-    messagingSenderId: "818380659407",
-    appId: "1:818380659407:web:7ee71139590488d78e75ba"
-  };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
+    const params = new URLSearchParams(window.location.search);
+    const videoId = params.get("videoId");
 
-  const form = document.getElementById("uploadForm");
-  const status = document.getElementById("uploadStatus");
-  const widget = uploadcare.Widget('[role=uploadcare-uploader]');
+    const player = new Plyr("#player", {
+      controls: ["play", "progress", "current-time", "mute", "volume", "settings", "fullscreen"]
+    });
 
-  onAuthStateChanged(auth, user => {
-    if (!user) {
-      window.location.href = "https://greenblox-creator.github.io/accounts";
-      return;
-    }
+    const titleEl = document.getElementById("videoTitle");
+    const metaEl = document.getElementById("videoMeta");
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const title = document.getElementById("videoTitle").value;
-      const file = widget.value();
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "https://greenblox-creator.github.io/accounts";
+      } else {
+        loadVideo(user);
+      }
+    });
 
-      if (!file || !title) {
-        status.textContent = "⚠️ Wybierz film i wpisz tytuł.";
+    async function loadVideo(user) {
+      if (!videoId) {
+        titleEl.innerHTML = "<span class='error'>❌ Nie podano ID filmu.</span>";
         return;
       }
 
-      status.textContent = "⏳ Przetwarzanie filmu, proszę czekać...";
-
       try {
-        const fileInfo = await file.promise();
+        const ref = db.collection("watch").doc(videoId);
+        const snap = await ref.get();
 
-        const videoData = {
-          url: fileInfo.cdnUrl + "video.mp4",
-          title,
-          created: Date.now(),
-          uid: user.uid,
-          views: 0,
-          ready: true
+        if (!snap.exists) {
+          titleEl.innerHTML = "<span class='error'>❌ Nie znaleziono filmu o ID:<br>" + videoId + "</span>";
+          return;
+        }
+
+        const data = snap.data();
+        if (!data.ready) {
+          titleEl.innerHTML = "<span class='error'>⏳ Film jeszcze się przetwarza...</span>";
+          return;
+        }
+
+        titleEl.textContent = data.title || "Bez tytułu";
+
+        const views = (data.views || 0) + 1;
+        const created = data.created || Date.now();
+        const ageMs = Date.now() - created;
+        const ageText = (() => {
+          const days = Math.floor(ageMs / 86400000);
+          if (days > 0) return `${days} dni temu`;
+          const hrs = Math.floor(ageMs / 3600000);
+          if (hrs > 0) return `${hrs} godzin temu`;
+          const mins = Math.floor(ageMs / 60000);
+          return `${mins} minut temu`;
+        })();
+
+        metaEl.textContent = `${views} wyświetleń • ${ageText}`;
+
+        await ref.update({ views: firebase.firestore.FieldValue.increment(1) });
+
+        const videoSrc = data.url.endsWith("/") ? data.url + "video.mp4" : data.url;
+        document.getElementById("player").src = videoSrc;
+
+        player.source = {
+          type: "video",
+          sources: [{ src: videoSrc, type: "video/mp4" }]
         };
 
-        const ref = await addDoc(collection(db, "videos"), videoData);
-        await setDoc(doc(db, "watch", ref.id), videoData);
-
-        status.textContent = "✅ Film przesłany! Przekierowuję...";
-        form.reset();
-        widget.value(null);
-
-        setTimeout(() => {
-          window.location.href = `watch.html?videoId=${ref.id}`;
-        }, 1000);
       } catch (err) {
-        console.error("❌ Błąd Firebase:", err.code, err.message);
-        status.textContent = `❌ Błąd zapisu: ${err.message}`;
+        titleEl.innerHTML = `<span class="error">❌ Błąd: ${err.message || err.toString()}</span>`;
       }
+    }
+
+    // 🔧 Skrypty menu (z upload.html)
+    document.getElementById("hamburger").addEventListener("click", () => {
+      document.getElementById("sidebar").classList.toggle("collapsed");
     });
-  });
-        </script>
-  
 
+    document.getElementById("accountBtn").addEventListener("click", () => {
+      document.getElementById("accountMenu").classList.toggle("hidden");
+    });
 
+    document.getElementById("logout").addEventListener("click", () => {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "https://greenblox-creator.github.io/accounts";
+      });
+    });
 
+    document.getElementById("myChannel").addEventListener("click", () => {
+      window.location.href = "channel.html";
+    });
+
+    document.getElementById("createChannel").addEventListener("click", () => {
+      window.location.href = "create-channel.html";
+    });
+
+    document.getElementById("uploadVideo").addEventListener("click", () => {
+      window.location.href = "upload.html";
+    });
+
+    document.getElementById("studio").addEventListener("click", () => {
+      window.location.href = "studio.html";
+    });
+  </script>
 </body>
 </html>
