@@ -93,6 +93,9 @@
     const titleEl = document.getElementById("videoTitle");
     const metaEl = document.getElementById("videoMeta");
 
+    <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
+
+  
     async function loadVideo() {
       if (!videoId) {
         titleEl.innerHTML = "<span class='error'>❌ Nie podano ID filmu.</span>";
