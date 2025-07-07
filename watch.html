@@ -26,28 +26,69 @@
 </head>
 <body>
 
-  <main>
-    <div class="player-wrapper">
-      <video id="player" controls playsinline></video>
-    </div>
-    <div class="video-info">
-      <h2 id="videoTitle">Ładowanie...</h2>
-      <div class="video-meta" id="videoMeta"></div>
-    </div>
-  </main>
+  <!-- POZIOME MENU -->
+  <header class="header">
+    <button id="hamburger" class="btn icon-btn">
+      <span class="icon">☰</span>
+    </button>
 
+    <div class="logo">GreenTube</div>
+
+    <div class="search">
+      <input id="searchInput" type="text" placeholder="Szukaj..." autocomplete="off" />
+      <button class="btn icon-btn"><span class="icon">🔍</span></button>
+      <ul id="suggestions" class="suggestions hidden"></ul>
+    </div>
+
+    <button id="accountBtn" class="btn icon-btn">
+      <span class="avatar">U</span>
+    </button>
+  </header>
+
+  <!-- LAYOUT -->
+  <div class="layout">
+    <aside id="sidebar" class="sidebar collapsed">
+      <nav>
+        <ul>
+          <li><span class="icon">🏠</span><span class="text">Główna</span></li>
+          <li><span class="icon">🎥</span><span class="text">Wideo</span></li>
+          <li><span class="icon">📃</span><span class="text">Playlisty</span></li>
+          <li><span class="icon">⭐</span><span class="text">Subskrypcje</span></li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn icon-btn"><span class="icon">⚙️</span></button>
+        <button class="btn icon-btn"><span class="icon">❗</span></button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="player-wrapper">
+        <video id="player" controls playsinline></video>
+      </div>
+      <div class="video-info">
+        <h2 id="videoTitle">Ładowanie...</h2>
+        <div class="video-meta" id="videoMeta"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MENU KONTA -->
+  <div id="accountMenu" class="account-menu hidden">
+    <ul>
+      <li id="myChannel">Twój kanał</li>
+      <li id="createChannel">Utwórz kanał</li>
+      <li id="uploadVideo">Prześlij film</li>
+      <li id="studio">Statystyki (GreenTube Studio)</li>
+      <li id="logout">Wyloguj się</li>
+    </ul>
+  </div>
+
+  <!-- Firebase + Plyr -->
   <script type="module">
     import Plyr from "https://cdn.plyr.io/3.7.8/plyr.polyfilled.js";
-    import {
-      initializeApp
-    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      updateDoc,
-      increment
-    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnGKAkzW9w2Y1NBeyasBTY29YYYzFok_A",
@@ -110,11 +151,14 @@
 
       await updateDoc(ref, { views: increment(1) });
 
+      const videoSrc = data.url.endsWith("/") ? data.url + "video.mp4" : data.url;
+      console.log("▶️ Finalny link do filmu:", videoSrc);
+
       player.source = {
         type: "video",
         sources: [
           {
-            src: data.url,
+            src: videoSrc,
             type: "video/mp4"
           }
         ]
