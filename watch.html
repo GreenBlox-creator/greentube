@@ -28,21 +28,14 @@
 
   <!-- POZIOME MENU -->
   <header class="header">
-    <button id="hamburger" class="btn icon-btn">
-      <span class="icon">☰</span>
-    </button>
-
+    <button id="hamburger" class="btn icon-btn"><span class="icon">☰</span></button>
     <div class="logo">GreenTube</div>
-
     <div class="search">
       <input id="searchInput" type="text" placeholder="Szukaj..." autocomplete="off" />
       <button class="btn icon-btn"><span class="icon">🔍</span></button>
       <ul id="suggestions" class="suggestions hidden"></ul>
     </div>
-
-    <button id="accountBtn" class="btn icon-btn">
-      <span class="avatar">U</span>
-    </button>
+    <button id="accountBtn" class="btn icon-btn"><span class="avatar">U</span></button>
   </header>
 
   <!-- LAYOUT -->
@@ -157,6 +150,7 @@
         const videoSrc = data.url.endsWith("/") ? data.url + "video.mp4" : data.url;
         console.log("▶️ Finalny link do filmu:", videoSrc);
 
+        // Ustawienie źródła Plyr
         player.source = {
           type: "video",
           sources: [
@@ -166,6 +160,10 @@
             }
           ]
         };
+
+        // Awaryjne przypisanie src bez Plyr
+        document.getElementById("player").src = videoSrc;
+
       } catch (err) {
         console.error("❌ Błąd podczas ładowania filmu:", err);
         titleEl.textContent = "Wystąpił błąd podczas ładowania filmu.";
@@ -174,7 +172,5 @@
 
     loadVideo();
   </script>
-
-  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 </body>
 </html>
