@@ -118,51 +118,58 @@
         return;
       }
 
-      const ref = doc(db, "watch", videoId);
-      const snap = await getDoc(ref);
+      try {
+        const ref = doc(db, "watch", videoId);
+        const snap = await getDoc(ref);
 
-      if (!snap.exists()) {
-        titleEl.textContent = "Nie znaleziono filmu.";
-        return;
+        if (!snap.exists()) {
+          titleEl.textContent = "Nie znaleziono filmu.";
+          console.warn("📛 Dokument nie istnieje:", videoId);
+          return;
+        }
+
+        const data = snap.data();
+        console.log("📦 Dane filmu:", data);
+
+        if (!data.ready) {
+          titleEl.textContent = "Film jeszcze się przetwarza...";
+          return;
+        }
+
+        titleEl.textContent = data.title || "Bez tytułu";
+
+        const views = (data.views || 0) + 1;
+        const created = data.created || Date.now();
+        const ageMs = Date.now() - created;
+        const ageText = (() => {
+          const days = Math.floor(ageMs / 86400000);
+          if (days > 0) return `${days} dni temu`;
+          const hrs = Math.floor(ageMs / 3600000);
+          if (hrs > 0) return `${hrs} godzin temu`;
+          const mins = Math.floor(ageMs / 60000);
+          return `${mins} minut temu`;
+        })();
+
+        metaEl.textContent = `${views} wyświetleń • ${ageText}`;
+
+        await updateDoc(ref, { views: increment(1) });
+
+        const videoSrc = data.url.endsWith("/") ? data.url + "video.mp4" : data.url;
+        console.log("▶️ Finalny link do filmu:", videoSrc);
+
+        player.source = {
+          type: "video",
+          sources: [
+            {
+              src: videoSrc,
+              type: "video/mp4"
+            }
+          ]
+        };
+      } catch (err) {
+        console.error("❌ Błąd podczas ładowania filmu:", err);
+        titleEl.textContent = "Wystąpił błąd podczas ładowania filmu.";
       }
-
-      const data = snap.data();
-
-      if (!data.ready) {
-        titleEl.textContent = "Film jeszcze się przetwarza...";
-        return;
-      }
-
-      titleEl.textContent = data.title || "Bez tytułu";
-
-      const views = (data.views || 0) + 1;
-      const created = data.created || Date.now();
-      const ageMs = Date.now() - created;
-      const ageText = (() => {
-        const days = Math.floor(ageMs / 86400000);
-        if (days > 0) return `${days} dni temu`;
-        const hrs = Math.floor(ageMs / 3600000);
-        if (hrs > 0) return `${hrs} godzin temu`;
-        const mins = Math.floor(ageMs / 60000);
-        return `${mins} minut temu`;
-      })();
-
-      metaEl.textContent = `${views} wyświetleń • ${ageText}`;
-
-      await updateDoc(ref, { views: increment(1) });
-
-      const videoSrc = data.url.endsWith("/") ? data.url + "video.mp4" : data.url;
-      console.log("▶️ Finalny link do filmu:", videoSrc);
-
-      player.source = {
-        type: "video",
-        sources: [
-          {
-            src: videoSrc,
-            type: "video/mp4"
-          }
-        ]
-      };
     }
 
     loadVideo();
