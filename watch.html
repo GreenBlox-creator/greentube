@@ -26,43 +26,6 @@
 </head>
 <body>
 
-    <!-- POZIOME MENU -->
-  <header class="header">
-    <button id="hamburger" class="btn icon-btn">
-      <span class="icon">☰</span>
-    </button>
-
-    <div class="logo">GreenTube</div>
-
-    <div class="search">
-      <input id="searchInput" type="text" placeholder="Szukaj..." autocomplete="off" />
-      <button class="btn icon-btn"><span class="icon">🔍</span></button>
-      <ul id="suggestions" class="suggestions hidden"></ul>
-    </div>
-
-    <button id="accountBtn" class="btn icon-btn">
-      <span class="avatar">U</span>
-    </button>
-  </header>
-
-  <!-- POZIOMY CONTAINER: PIONOWE MENU + TREŚĆ -->
-  <div class="layout">
-    <aside id="sidebar" class="sidebar collapsed">
-      <nav>
-        <ul>
-          <li><span class="icon">🏠</span><span class="text">Główna</span></li>
-          <li><span class="icon">🎥</span><span class="text">Wideo</span></li>
-          <li><span class="icon">📃</span><span class="text">Playlisty</span></li>
-          <li><span class="icon">⭐</span><span class="text">Subskrypcje</span></li>
-        </ul>
-      </nav>
-
-      <div class="sidebar-footer">
-        <button class="btn icon-btn"><span class="icon">⚙️</span></button>
-        <button class="btn icon-btn"><span class="icon">❗</span></button>
-      </div>
-    </aside>
-
   <main>
     <div class="player-wrapper">
       <video id="player" controls playsinline></video>
@@ -75,8 +38,16 @@
 
   <script type="module">
     import Plyr from "https://cdn.plyr.io/3.7.8/plyr.polyfilled.js";
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      updateDoc,
+      increment
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnGKAkzW9w2Y1NBeyasBTY29YYYzFok_A",
@@ -106,7 +77,7 @@
         return;
       }
 
-      const ref = doc(db, "videos", videoId);
+      const ref = doc(db, "watch", videoId);
       const snap = await getDoc(ref);
 
       if (!snap.exists()) {
@@ -115,6 +86,12 @@
       }
 
       const data = snap.data();
+
+      if (!data.ready) {
+        titleEl.textContent = "Film jeszcze się przetwarza...";
+        return;
+      }
+
       titleEl.textContent = data.title || "Bez tytułu";
 
       const views = (data.views || 0) + 1;
@@ -131,17 +108,14 @@
 
       metaEl.textContent = `${views} wyświetleń • ${ageText}`;
 
-      // Zwiększ licznik wyświetleń
       await updateDoc(ref, { views: increment(1) });
 
-      // Ustaw źródło filmu
       player.source = {
         type: "video",
         sources: [
           {
             src: data.url,
-            type: "video/mp4",
-            size: 720
+            type: "video/mp4"
           }
         ]
       };
