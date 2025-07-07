@@ -68,6 +68,7 @@
   <!-- Firebase + Plyr -->
   <script src="https://cdn.jsdelivr.net/npm/firebase@11.10.0/firebase-app-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@11.10.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@11.10.0/firebase-auth-compat.js"></script>
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
   <script>
@@ -82,6 +83,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
     const params = new URLSearchParams(window.location.search);
     const videoId = params.get("videoId");
@@ -93,10 +95,15 @@
     const titleEl = document.getElementById("videoTitle");
     const metaEl = document.getElementById("videoMeta");
 
-    <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "https://greenblox-creator.github.io/accounts";
+      } else {
+        loadVideo(user);
+      }
+    });
 
-  
-    async function loadVideo() {
+    async function loadVideo(user) {
       if (!videoId) {
         titleEl.innerHTML = "<span class='error'>❌ Nie podano ID filmu.</span>";
         return;
@@ -147,8 +154,6 @@
         titleEl.innerHTML = `<span class="error">❌ Błąd: ${err.message || err.toString()}</span>`;
       }
     }
-
-    loadVideo();
   </script>
 </body>
 </html>
