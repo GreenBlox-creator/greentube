@@ -74,10 +74,20 @@
   </div>
 
   <!-- Firebase + Uploadcare logika -->
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    doc,
+    setDoc
+  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+  import {
+    getAuth,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDnGKAkzW9w2Y1NBeyasBTY29YYYzFok_A",
@@ -117,12 +127,17 @@
       try {
         const fileInfo = await file.promise();
 
-        const ref = await addDoc(collection(db, "videos"), {
+        const videoData = {
           url: fileInfo.cdnUrl,
           title,
           created: Date.now(),
-          uid: user.uid
-        });
+          uid: user.uid,
+          views: 0,
+          ready: true
+        };
+
+        const ref = await addDoc(collection(db, "videos"), videoData);
+        await setDoc(doc(db, "watch", ref.id), videoData);
 
         status.textContent = "✅ Film przesłany! Przekierowuję...";
         form.reset();
@@ -130,15 +145,15 @@
 
         setTimeout(() => {
           window.location.href = `watch.html?videoId=${ref.id}`;
-        }, 1000); // ⏱️ Dajemy Firestore chwilę na zapis
+        }, 1000);
       } catch (err) {
         console.error("❌ Błąd Firebase:", err.code, err.message);
         status.textContent = `❌ Błąd zapisu: ${err.message}`;
       }
     });
   });
-</script>
-
+        </script>
+  
 
 
 
