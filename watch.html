@@ -123,6 +123,27 @@
       if (!user) {
         window.location.href = "https://greenblox-creator.github.io/accounts";
       } else {
+        // Obsługa menu konta z UID
+        document.getElementById("myChannel").onclick = () => {
+          window.location.href = `channel.html?uid=${user.uid}`;
+        };
+        document.getElementById("createChannel").onclick = () => {
+          window.location.href = "create-channel.html";
+        };
+        document.getElementById("studio").onclick = () => {
+          window.location.href = "studio.html";
+        };
+        document.getElementById("uploadVideo").onclick = () => {
+          window.location.href = "upload.html";
+        };
+        document.getElementById("logout").addEventListener("click", () => {
+          firebase.auth().signOut().then(() => {
+            window.location.href = "https://greenblox-creator.github.io/accounts";
+          }).catch((error) => {
+            console.error("Błąd wylogowania:", error);
+          });
+        });
+
         loadVideo(user);
       }
     });
@@ -163,7 +184,6 @@
         })();
 
         metaEl.textContent = `${views} wyświetleń • ${ageText}`;
-
         await ref.update({ views: firebase.firestore.FieldValue.increment(1) });
 
         const videoSrc = data.url.endsWith("/") ? data.url + "video.mp4" : data.url;
@@ -179,7 +199,7 @@
       }
     }
 
-    // 🔧 Skrypty menu (z app.js)
+    // Obsługa menu
     const hamburger = document.getElementById("hamburger");
     const sidebar = document.getElementById("sidebar");
     hamburger.addEventListener("click", () => {
@@ -191,7 +211,7 @@
     const sampleWords = ["muzyka", "programowanie", "vlog", "tutorial", "gaming"];
 
     searchInput.addEventListener("input", () => {
-      const q = searchInput.value.toLowerCase();
+            const q = searchInput.value.toLowerCase();
       suggestions.innerHTML = "";
       if (q.length < 2) {
         suggestions.classList.add("hidden");
@@ -202,44 +222,13 @@
         .forEach(w => {
           const li = document.createElement("li");
           li.textContent = w;
-          li.onclick = () => searchInput.value = w;
+          li.onclick = () => {
+            searchInput.value = w;
+            suggestions.classList.add("hidden");
+          };
           suggestions.append(li);
         });
       suggestions.classList.toggle("hidden", !suggestions.childElementCount);
-    });
-
-    const accountBtn = document.getElementById("accountBtn");
-    const accountMenu = document.getElementById("accountMenu");
-
-    if (accountBtn && accountMenu) {
-      accountBtn.addEventListener("click", () => {
-        accountMenu.classList.toggle("hidden");
-      });
-    }
-
-        document.getElementById("myChannel").onclick = () => {
-      window.location.href = `channel.html?uid=${user.uid}`;
-
-    };
-
-    document.getElementById("createChannel").onclick = () => {
-      window.location.href = "create-channel.html";
-    };
-
-    document.getElementById("studio").onclick = () => {
-      window.location.href = "studio.html";
-    };
-
-    document.getElementById("uploadVideo").onclick = () => {
-      window.location.href = "upload.html";
-    };
-
-    document.getElementById("logout").addEventListener("click", () => {
-      firebase.auth().signOut().then(() => {
-        window.location.href = "https://greenblox-creator.github.io/accounts";
-      }).catch((error) => {
-        console.error("Błąd wylogowania:", error);
-      });
     });
   </script>
 </body>
