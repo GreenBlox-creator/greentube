@@ -218,7 +218,8 @@
     }
 
         document.getElementById("myChannel").onclick = () => {
-      window.location.href = "channel.html";
+      window.location.href = `channel.html?uid=${user.uid}`;
+
     };
 
     document.getElementById("createChannel").onclick = () => {
