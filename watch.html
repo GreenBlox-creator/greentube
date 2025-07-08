@@ -36,15 +36,12 @@
     <button id="hamburger" class="btn icon-btn">
       <span class="icon">☰</span>
     </button>
-
     <div class="logo">GreenTube</div>
-
     <div class="search">
       <input id="searchInput" type="text" placeholder="Szukaj..." autocomplete="off" />
       <button class="btn icon-btn"><span class="icon">🔍</span></button>
       <ul id="suggestions" class="suggestions hidden"></ul>
     </div>
-
     <button id="accountBtn" class="btn icon-btn">
       <span class="avatar">U</span>
     </button>
@@ -96,6 +93,7 @@
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
   <script>
+    // Inicjalizacja Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDnGKAkzW9w2Y1NBeyasBTY29YYYzFok_A",
       authDomain: "greentube-b93d1.firebaseapp.com",
@@ -104,121 +102,110 @@
       messagingSenderId: "818380659407",
       appId: "1:818380659407:web:7ee71139590488d78e75ba"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
+    // Parsowanie videoId
     const params = new URLSearchParams(window.location.search);
     const videoId = params.get("videoId");
 
+    // Plyr
     const player = new Plyr("#player", {
-      controls: ["play", "progress", "current-time", "mute", "volume", "settings", "fullscreen"]
+      controls: ["play","progress","current-time","mute","volume","settings","fullscreen"]
     });
 
     const titleEl = document.getElementById("videoTitle");
-    const metaEl = document.getElementById("videoMeta");
+    const metaEl  = document.getElementById("videoMeta");
 
+    // Sprawdzanie zalogowania
     auth.onAuthStateChanged(user => {
       if (!user) {
         window.location.href = "https://greenblox-creator.github.io/accounts";
-      } else {
-        // Obsługa menu konta z UID
-        document.getElementById("myChannel").onclick = () => {
-          window.location.href = `channel.html?uid=${user.uid}`;
-        };
-        document.getElementById("createChannel").onclick = () => {
-          window.location.href = "create-channel.html";
-        };
-        document.getElementById("studio").onclick = () => {
-          window.location.href = "studio.html";
-        };
-        document.getElementById("uploadVideo").onclick = () => {
-          window.location.href = "upload.html";
-        };
-        document.getElementById("logout").addEventListener("click", () => {
-          firebase.auth().signOut().then(() => {
-            window.location.href = "https://greenblox-creator.github.io/accounts";
-          }).catch((error) => {
-            console.error("Błąd wylogowania:", error);
-          });
-        });
-
-        loadVideo(user);
+        return;
       }
+      // Menu konta z dynamicznym UID
+      document.getElementById("myChannel").onclick = () => {
+        window.location.href = `channel.html?uid=${user.uid}`;
+      };
+      document.getElementById("createChannel").onclick = () => {
+        window.location.href = "create-channel.html";
+      };
+      document.getElementById("studio").onclick = () => {
+        window.location.href = "studio.html";
+      };
+      document.getElementById("uploadVideo").onclick = () => {
+        window.location.href = "upload.html";
+      };
+      document.getElementById("logout").onclick = () => {
+        auth.signOut().then(() => {
+          window.location.href = "https://greenblox-creator.github.io/accounts";
+        });
+      };
+
+      loadVideo();
     });
 
-    async function loadVideo(user) {
+    // Ładowanie i odtwarzanie filmu
+    async function loadVideo() {
       if (!videoId) {
         titleEl.innerHTML = "<span class='error'>❌ Nie podano ID filmu.</span>";
         return;
       }
-
       try {
         const ref = db.collection("watch").doc(videoId);
         const snap = await ref.get();
-
         if (!snap.exists) {
           titleEl.innerHTML = "<span class='error'>❌ Nie znaleziono filmu o ID:<br>" + videoId + "</span>";
           return;
         }
-
         const data = snap.data();
         if (!data.ready) {
           titleEl.innerHTML = "<span class='error'>⏳ Film jeszcze się przetwarza...</span>";
           return;
         }
-
         titleEl.textContent = data.title || "Bez tytułu";
-
-        const views = (data.views || 0) + 1;
-        const created = data.created || Date.now();
+        const views = (data.views||0)+1;
+        const created = data.created||Date.now();
         const ageMs = Date.now() - created;
-        const ageText = (() => {
-          const days = Math.floor(ageMs / 86400000);
-          if (days > 0) return `${days} dni temu`;
-          const hrs = Math.floor(ageMs / 3600000);
-          if (hrs > 0) return `${hrs} godzin temu`;
-          const mins = Math.floor(ageMs / 60000);
-          return `${mins} minut temu`;
-        })();
-
+        const days = Math.floor(ageMs/86400000);
+        const hrs  = Math.floor((ageMs%86400000)/3600000);
+        const mins = Math.floor((ageMs%3600000)/60000);
+        const ageText = days>0?`${days} dni temu`:
+                        hrs>0?`${hrs} godzin temu`:
+                              `${mins} minut temu`;
         metaEl.textContent = `${views} wyświetleń • ${ageText}`;
         await ref.update({ views: firebase.firestore.FieldValue.increment(1) });
 
-        const videoSrc = data.url.endsWith("/") ? data.url + "video.mp4" : data.url;
+        const videoSrc = data.url.endsWith("/")?data.url+"video.mp4":data.url;
         document.getElementById("player").src = videoSrc;
+        player.source = { type:"video", sources:[{ src:videoSrc, type:"video/mp4" }] };
 
-        player.source = {
-          type: "video",
-          sources: [{ src: videoSrc, type: "video/mp4" }]
-        };
-
-      } catch (err) {
-        titleEl.innerHTML = `<span class="error">❌ Błąd: ${err.message || err.toString()}</span>`;
+      } catch(err) {
+        titleEl.innerHTML = `<span class="error">❌ Błąd: ${err.message||err}</span>`;
       }
     }
 
-    // Obsługa menu
+    // Obsługa menu bocznego
     const hamburger = document.getElementById("hamburger");
-    const sidebar = document.getElementById("sidebar");
+    const sidebar   = document.getElementById("sidebar");
     hamburger.addEventListener("click", () => {
       sidebar.classList.toggle("expanded");
     });
 
+    // Podpowiedzi w wyszukiwarce
     const searchInput = document.getElementById("searchInput");
     const suggestions = document.getElementById("suggestions");
-    const sampleWords = ["muzyka", "programowanie", "vlog", "tutorial", "gaming"];
+    const sampleWords = ["muzyka","programowanie","vlog","tutorial","gaming"];
 
     searchInput.addEventListener("input", () => {
-            const q = searchInput.value.toLowerCase();
+      const q = searchInput.value.toLowerCase();
       suggestions.innerHTML = "";
       if (q.length < 2) {
         suggestions.classList.add("hidden");
         return;
       }
-      sampleWords
-        .filter(w => w.startsWith(q))
+      sampleWords.filter(w => w.startsWith(q))
         .forEach(w => {
           const li = document.createElement("li");
           li.textContent = w;
@@ -230,6 +217,15 @@
         });
       suggestions.classList.toggle("hidden", !suggestions.childElementCount);
     });
+
+    // Obsługa przycisku profilowego
+    const accountBtn  = document.getElementById("accountBtn");
+    const accountMenu = document.getElementById("accountMenu");
+    if (accountBtn && accountMenu) {
+      accountBtn.addEventListener("click", () => {
+        accountMenu.classList.toggle("hidden");
+      });
+    }
   </script>
 </body>
 </html>
